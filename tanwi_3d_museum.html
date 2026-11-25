@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>A Little World for Tanwi</title>
+<style>
+:root{--rose:#c77b91;--gold:#e7c98a;--cream:#fff4e8;--ink:#34232d}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#211923;color:var(--cream);font-family:Georgia,serif;touch-action:none}
+#scene{position:fixed;inset:0}canvas{display:block}
+#intro{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#76505fdd,#211923f5 72%);text-align:center;padding:24px}
+.panel{max-width:520px;padding:34px 28px;border:1px solid #e7c98a88;border-radius:28px;background:#352630d9;box-shadow:0 20px 80px #0008}
+h1{font-size:clamp(32px,7vw,58px);font-weight:400;margin:8px 0 12px;color:#ffe8cf}p{line-height:1.65;color:#f3dfe0}
+button{border:1px solid #f0d49a;background:linear-gradient(135deg,#f0d9ac,#c98791);color:#392630;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 6px 18px #0003}
+button:active{transform:scale(.97)}.subtle{background:#382a35dd;color:#fff0df;border-color:#e6c98b66}
+#hud{position:fixed;inset:0;pointer-events:none;display:none}
+#topbar{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{pointer-events:auto;background:#2c202dcc;border:1px solid #e8c98b88;border-radius:20px;padding:9px 13px;font:13px Arial;color:#ffefd9;backdrop-filter:blur(8px)}
+#hint{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:#241a24c9;border:1px solid #e8c98b66;border-radius:18px;padding:8px 13px;font:12px Arial;text-align:center;max-width:90%;white-space:nowrap}
+#actions{position:absolute;right:14px;bottom:18px;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:auto}
+#actions button{min-width:122px;padding:10px 13px}
+#stick{position:absolute;left:22px;bottom:26px;width:142px;height:142px;border-radius:50%;background:#2b202a88;border:2px solid #f2d9a977;pointer-events:auto;touch-action:none;box-shadow:inset 0 0 25px #0005}
+#knob{position:absolute;width:58px;height:58px;left:40px;top:40px;border-radius:50%;background:linear-gradient(145deg,#ffe9ca,#c98194);border:2px solid #fff0d5;box-shadow:0 5px 16px #0006;pointer-events:none}
+#look{position:absolute;left:175px;bottom:35px;width:min(28vw,130px);height:120px;border-radius:20px;background:#2b202a33;border:1px dashed #f2d9a955;pointer-events:auto;color:#fff8;display:grid;place-items:center;font:11px Arial;touch-action:none}
+#toast{position:absolute;left:50%;bottom:180px;transform:translateX(-50%);padding:10px 16px;border-radius:20px;background:#2b202add;border:1px solid #e7c98a88;font:13px Arial;opacity:0;transition:opacity .25s;white-space:nowrap}
+#note{position:fixed;z-index:6;inset:0;display:none;place-items:center;background:#100d12bb;padding:20px}
+#note .panel{max-width:560px}
+@media(max-width:600px){#stick{width:124px;height:124px;left:14px;bottom:18px}#knob{width:52px;height:52px;left:34px;top:34px}#look{left:150px;bottom:22px;width:85px;height:100px}#actions{right:9px;bottom:14px}#actions button{min-width:105px;padding:9px 10px;font-size:12px}#hint{font-size:10px;top:58px}#toast{bottom:160px}}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="intro"><div class="panel"><div style="font-size:30px">✦ ♡ ✦</div><h1>A little world<br>for Tanwi</h1><p>A quiet place made of memories, little moments and things left unsaid.</p><button id="enter">ENTER THE MUSEUM</button><p style="font:11px Arial;color:#d8bdc5;margin-bottom:0">Move with the joystick • Drag the right side to look around</p></div></div>
+<div id="hud">
+ <div id="topbar"><div class="pill">♡ OUR LITTLE MUSEUM</div><button class="subtle" id="home">Start point ↺</button></div>
+ <div id="hint">Use the joystick to walk • Drag the right side to look around</div>
+ <div id="stick"><div id="knob"></div></div><div id="look">DRAG TO LOOK</div>
+ <div id="actions">
+  <button data-act="dance">♪ Dance together</button><button data-act="hug">♡ Friendly hug</button><button data-act="sit">☾ Sit together</button><button data-act="walk">✧ Walk together</button><button data-act="idle" class="subtle">Stop / relax</button><button id="read" class="subtle">A note for you</button>
+ </div><div id="toast"></div>
+</div>
+<div id="note"><div class="panel"><div style="font-size:28px">🤍</div><h1 style="font-size:34px">A note for you</h1><p>Tanwi, pata hai abhi tum mujhse naraz ho, aur shayad meri kisi baat ne tumhe sach mein hurt kiya hai. Main bas itna kehna chahta hoon ki tumhari feelings mere liye important hain. Main apni galti ko halka nahi samajh raha. Har baar sirf sorry bol dene se sab theek nahi hota, mujhe apne actions se bhi dikhana hoga. Jab tumhara mann ho tab baat kar lena, koi pressure nahi hai. Bas itna chahta hoon ki tum ye jaano ki main tumhari baat sunna aur samajhna chahta hoon. Take your time. 🤍</p><button id="closeNote">Close</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const host=document.querySelector('#scene');
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#302330');scene.fog=new THREE.Fog('#302330',35,100);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,180);
+scene.add(new THREE.HemisphereLight('#ffe8d2','#4a3448',2.0));
+const key=new THREE.DirectionalLight('#ffe4c0',3.0);key.position.set(-12,22,10);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene.add(key);
+function mat(c,rough=.72,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal})}
+const floorMat=mat('#765866'),wallMat=mat('#8d6878'),trim=mat('#d7b77d',.38,.45),cream=mat('#f2dfc7'),dark=mat('#4a3543'),pink=mat('#d88fa1'),skin=mat('#e8b99a'),hair=mat('#30232a'),blue=mat('#536b87'),red=mat('#b94f61');
+function box(w,h,d,m,x,y,z, parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+box(66,.6,58,floorMat,0,-.35,0);
+function wall(w,h,d,x,y,z){box(w,h,d,wallMat,x,y,z);box(w,.22,d+.08,trim,x,y+h/2,z);box(w,.22,d+.08,trim,x,y-h/2,z)}
+// Grand connected museum shell, open at front
+wall(66,13,.7,0,6.5,-29);wall(.7,13,58,-33,6.5,0);wall(.7,13,58,33,6.5,0);
+wall(20,13,.7,-23,6.5,0);wall(20,13,.7,23,6.5,0);
+for(let x=-27;x<=27;x+=9){box(.32,12,.42,trim,x,6,-28.55);box(.32,12,.42,trim,x,6,28.55)}
+// ceiling ribs and chandeliers
+for(let z=-24;z<=24;z+=12){const rib=box(66,.38,.6,trim,0,12.8,z);rib.material=trim}
+function arch(x,z){const g=new THREE.Group();scene.add(g);for(const s of [-1,1]){const col=new THREE.Mesh(new THREE.CylinderGeometry(.38,.48,10,16),cream);col.position.set(x+s*3,5,z);col.castShadow=true;g.add(col);const cap=new THREE.Mesh(new THREE.BoxGeometry(1.1,.45,1.1),trim);cap.position.set(x+s*3,10.2,z);g.add(cap)}const curve=new THREE.Mesh(new THREE.TorusGeometry(3, .34,12,40,Math.PI),trim);curve.rotation.z=Math.PI;curve.position.set(x,10,z);g.add(curve)}
+for(let x of [-18,0,18])arch(x,-8);
+function chandelier(x,z){const g=new THREE.Group();g.position.set(x,10.8,z);scene.add(g);const stem=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,1.3,12),trim);g.add(stem);for(let i=0;i<8;i++){let a=i*Math.PI/4;let orb=new THREE.Mesh(new THREE.SphereGeometry(.22,12,12),new THREE.MeshStandardMaterial({color:'#ffe2a2',emissive:'#ffb94d',emissiveIntensity:1.8}));orb.position.set(Math.cos(a)*1.3,-.5,Math.sin(a)*1.3);g.add(orb)}const l=new THREE.PointLight('#ffd49b',38,16);l.position.y=-.6;g.add(l)}
+for(let z of [-20,-5,13])chandelier(0,z);
+function frame(x,y,z,rot=0){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot;scene.add(g);box(4.5,3.3,.25,trim,0,0,0,g);box(4.05,2.85,.12,dark,0,0,.18,g);box(3.78,2.58,.08,mat('#a97989'),0,0,.27,g);const inner=box(3.5,2.3,.04,mat('#e7c6b4'),0,0,.34,g);const t=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,8,24),trim);t.position.set(0,-1.18,.4);g.add(t);return g}
+for(let z of [-27,-17,-7,3,13,23]){frame(-32.45,5,z,Math.PI/2);frame(32.45,5,z,-Math.PI/2)}
+for(let x of [-25,-15,-5,5,15,25]){frame(x,5,-28.45,0)}
+// side rooms partitions / doorway markers
+for(let z of [-2,14]){box(.5,9,.5,pink,-12,4.5,z);box(.5,9,.5,pink,12,4.5,z);box(24,.5,.5,trim,0,9,z)}
+// central video screen
+box(15,8,.6,trim,0,6,-27.7);box(14.2,7.2,.2,mat('#171c2c'),0,6,-27.3);
+const screenText=document.createElement('canvas');screenText.width=1024;screenText.height=512;const ctx=screenText.getContext('2d');ctx.fillStyle='#25202d';ctx.fillRect(0,0,1024,512);ctx.fillStyle='#f5dcb8';ctx.textAlign='center';ctx.font='58px Georgia';ctx.fillText('OUR LITTLE MEMORIES',512,220);ctx.font='30px Georgia';ctx.fillText('Your photos & video will live here ♡',512,285);const tex=new THREE.CanvasTexture(screenText);const screen=new THREE.Mesh(new THREE.PlaneGeometry(13.8,6.8),new THREE.MeshBasicMaterial({map:tex}));screen.position.set(0,6,-27.16);scene.add(screen);
+// benches
+function bench(x,z){box(5,.35,1.4,trim,x,1.35,z);box(5,1.7,.35,dark,x,2.1,z+-.5);for(let dx of [-2,2])box(.3,1.3,.3,trim,x+dx,.65,z)}
+bench(-22,18);bench(22,18);bench(0,20);
+// decorative planters
+function planter(x,z){const p=new THREE.Mesh(new THREE.CylinderGeometry(1.1,.8,1.1,16),pink);p.position.set(x,.3,z);p.castShadow=true;scene.add(p);for(let i=0;i<7;i++){let a=i*2.4;let leaf=new THREE.Mesh(new THREE.SphereGeometry(.38,10,10),mat('#6c9878'));leaf.scale.set(.55,1.8,.45);leaf.position.set(x+Math.cos(a)*.5,1.8+Math.sin(i)*.2,z+Math.sin(a)*.5);leaf.rotation.z=Math.cos(a)*.4;scene.add(leaf)}}
+for(let x of [-29,-18,18,29])for(let z of [-20,0,22])planter(x,z);
+// Character made of stylized 3D shapes with jointed limbs
+function makeAvatar(isGirl=false){const root=new THREE.Group();scene.add(root);const torso=new THREE.Group();root.add(torso);
+const outfit=isGirl?pink:blue, hairMat=hair;
+function sphere(parent,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;parent.add(o);return o}
+sphere(torso,0,1.65,0,.62,.78,.36,mat(isGirl?'#d77e98':'#55799a'));
+sphere(torso,0,2.72,0,.48,.52,.44,skin);
+sphere(torso,0,3.08,-.02,.5,.22,.46,hairMat);
+sphere(torso,-.45,2.74,0,.12,.2,.14,skin);sphere(torso,.45,2.74,0,.12,.2,.14,skin);
+sphere(torso,-.18,2.78,.39,.055,.075,.035,mat('#34252b'));sphere(torso,.18,2.78,.39,.055,.075,.035,mat('#34252b'));
+sphere(torso,0,2.59,.42,.13,.045,.035,mat('#b96e70'));
+if(isGirl){sphere(torso,-.49,2.52,-.02,.2,.5,.2,hairMat);sphere(torso,.49,2.52,-.02,.2,.5,.2,hairMat);sphere(torso,0,3.18,-.08,.48,.22,.47,hairMat)}
+const arms=[];for(let s of [-1,1]){let pivot=new THREE.Group();pivot.position.set(s*.57,2.1,0);torso.add(pivot);let arm=sphere(pivot,s*.12,-.48,0,.18,.55,.18,skin);arm.rotation.z=-s*.18; sphere(pivot,s*.15,-.94,.02,.17,.18,.17,skin);arms.push(pivot)}
+const legs=[];for(let s of [-1,1]){let pivot=new THREE.Group();pivot.position.set(s*.25,1.05,0);torso.add(pivot);sphere(pivot,0,-.52,0,.22,.62,.24,mat(isGirl?'#49394b':'#303a54'));sphere(pivot,0,-1.05,.12,.25,.16,.4,mat('#f1dfd1'));legs.push(pivot)}
+root.userData={torso,arms,legs,isGirl};return root}
+const boy=makeAvatar(false),girl=makeAvatar(true);boy.position.set(-1,0,5);girl.position.set(1,0,5);boy.rotation.y=Math.PI;girl.rotation.y=Math.PI;
+const player=boy;let yaw=0,action='idle',actionT=0,walkT=0,playerPos=new THREE.Vector3(0,0,6),moving=false;
+function toast(s){const t=document.querySelector('#toast');t.textContent=s;t.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.opacity=0,1900)}
+const intro=document.querySelector('#intro'),hud=document.querySelector('#hud');
+document.querySelector('#enter').onclick=()=>{intro.style.display='none';hud.style.display='block';toast('Welcome in. Take your time 🤍')};
+document.querySelector('#home').onclick=()=>{playerPos.set(0,0,6);yaw=0;toast('Back at the entrance')};
+document.querySelector('#read').onclick=()=>document.querySelector('#note').style.display='grid';
+document.querySelector('#closeNote').onclick=()=>document.querySelector('#note').style.display='none';
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{action=b.dataset.act;actionT=0;toast(({dance:'A little dance together ♡',hug:'A gentle hug ♡',sit:'Taking a quiet seat',walk:'A little walk together',idle:'Back to exploring'})[action])});
+// joystick
+const stick=document.querySelector('#stick'),knob=document.querySelector('#knob');let joy={x:0,y:0},stickOn=false,stickId=null;
+function setJoy(e){const r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,lim=r.width*.32,l=Math.hypot(dx,dy);if(l>lim){dx*=lim/l;dy*=lim/l}joy.x=dx/lim;joy.y=dy/lim;knob.style.transform=`translate(${dx}px,${dy}px)`}
+stick.addEventListener('pointerdown',e=>{stickOn=true;stickId=e.pointerId;stick.setPointerCapture(stickId);setJoy(e)});
+stick.addEventListener('pointermove',e=>{if(stickOn&&e.pointerId===stickId)setJoy(e)});
+function endStick(){stickOn=false;stickId=null;joy.x=joy.y=0;knob.style.transform='translate(0,0)'}
+stick.addEventListener('pointerup',endStick);stick.addEventListener('pointercancel',endStick);
+// right-side look pad and general right half drag
+const look=document.querySelector('#look');let looking=false,lastX=0;
+look.addEventListener('pointerdown',e=>{looking=true;lastX=e.clientX;look.setPointerCapture(e.pointerId)});
+look.addEventListener('pointermove',e=>{if(looking){yaw-=(e.clientX-lastX)*.008;lastX=e.clientX}});
+look.addEventListener('pointerup',()=>looking=false);look.addEventListener('pointercancel',()=>looking=false);
+let keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function updateAvatar(av,t,mode){const u=av.userData;let swing=0,bob=0;if(mode==='dance'){swing=Math.sin(t*5)*.65;bob=Math.abs(Math.sin(t*5))*.16;u.torso.rotation.z=Math.sin(t*5)*.16}else if(mode==='walk'){swing=Math.sin(t*7)*.5;bob=Math.abs(Math.sin(t*7))*.08;u.torso.rotation.z=0}else if(mode==='hug'){u.torso.rotation.x=-.22;u.arms[0].rotation.z=-.9;u.arms[1].rotation.z=.9}else if(mode==='sit'){u.legs.forEach(l=>l.rotation.x=-1.05);u.torso.position.y=-.35}else{u.torso.rotation.set(0,0,0);u.torso.position.y=0;u.arms.forEach(a=>a.rotation.set(0,0,0));u.legs.forEach(l=>l.rotation.set(0,0,0))}
+if(mode==='dance'||mode==='walk'){u.legs[0].rotation.x=Math.sin(t*7)*.45;u.legs[1].rotation.x=-Math.sin(t*7)*.45;u.arms[0].rotation.z=-swing;u.arms[1].rotation.z=swing;u.torso.position.y=bob}}
+const clock=new THREE.Clock();const forward=new THREE.Vector3(),right=new THREE.Vector3();
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;let ix=joy.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),iy=joy.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);let len=Math.hypot(ix,iy);moving=len>.12;
+if(moving&&action==='idle'){let ang=yaw;forward.set(-Math.sin(ang),0,-Math.cos(ang));right.set(Math.cos(ang),0,-Math.sin(ang));let v=forward.multiplyScalar(-iy).add(right.multiplyScalar(ix));if(v.lengthSq()>0)v.normalize();playerPos.addScaledVector(v,dt*5.2);playerPos.x=THREE.MathUtils.clamp(playerPos.x,-29,29);playerPos.z=THREE.MathUtils.clamp(playerPos.z,-25,25);boy.rotation.y=Math.atan2(-v.x,-v.z);walkT+=dt*7}
+boy.position.copy(playerPos);girl.position.set(playerPos.x+Math.sin(t*.7)*.9,0,playerPos.z-1.2+Math.cos(t*.7)*.25);girl.rotation.y=boy.rotation.y;
+if(action==='walk'){girl.position.x=playerPos.x+Math.sin(t*1.7)*.9;girl.position.z=playerPos.z-1.3+Math.cos(t*1.7)*.3}
+if(action==='sit'){boy.position.y=-.5;girl.position.y=-.5;boy.position.x=playerPos.x-.65;girl.position.x=playerPos.x+.65;boy.rotation.y=girl.rotation.y=0}else{boy.position.y=0;girl.position.y=0}
+if(action==='hug'){girl.position.set(boy.position.x+.65,0,boy.position.z-.15);girl.rotation.y=boy.rotation.y+Math.PI}
+updateAvatar(boy,t,action==='idle'?(moving?'walk':'idle'):action);updateAvatar(girl,t,action==='idle'?'idle':action==='walk'?'walk':action);
+let target=new THREE.Vector3(playerPos.x+Math.sin(yaw)*9,5.2,playerPos.z+Math.cos(yaw)*9);camera.position.lerp(target,1-Math.pow(.001,dt));camera.lookAt(playerPos.x,2,playerPos.z-1.2);
+renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
